@@ -1,16 +1,16 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.example.productService.Controller;
 
 
 
 import com.example.productService.Model.Product;
 import com.example.productService.Repository.productRepository;
+import com.example.productService.responses.ResponseHandler;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,65 +29,81 @@ public class productController {
     @Autowired
     private productRepository PR;
     
+    //done
     @PostMapping("/addProduct")
-    public ResponseEntity<String> addProduct(@RequestBody Product pro){
-        if (pro.getId_product() == null || pro.getId_product().isEmpty() || pro.getNama_product() == null || pro.getNama_product().isEmpty() || pro.getDeskripsi_product() == null || pro.getDeskripsi_product().isEmpty() || pro.getHarga_product() == null || pro.getHarga_product().isEmpty() || pro.getStock_product() == null || pro.getStock_product().isEmpty()) {
-            return ResponseEntity.badRequest().body("Gagal menambahkan produk. Harap lengkapi semua atribut.");
-        }else{
-            PR.insert(pro);
-            return ResponseEntity.ok("Product added successfully");            
+    public ResponseEntity<?> addUser(@RequestBody Product pro) {
+        try {
+            pro.setId_product(UUID.randomUUID().toString().substring(0, 10));
+            Product newPro = PR.save(pro);
+            return ResponseHandler.generateResponse("Product added successfully", newPro, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return ResponseHandler.errorResponse(Collections.singletonList("Failed to add Product: "),HttpStatus.NOT_FOUND);
         }
     }
     
+    //done
+    @GetMapping("/selectProduct")
+    public ResponseEntity<List<Product>> getAllProduct() {
+        List<Product> pro = (List<Product>) PR.findAll();
+        return ResponseEntity.ok(pro);
+    }
+    
+    
+    //done
     @GetMapping("/getById/{id_product}")
-    public @ResponseBody ResponseEntity<Product> getByID(@PathVariable String id_product) {
+    public ResponseEntity<?> getByID(@PathVariable String id_product) {
         Optional<Product> product = PR.findById(id_product);
         if (product.isPresent()) {
             return ResponseEntity.ok(product.get());
         } else {
-            return ResponseEntity.notFound().build();
+            return ResponseHandler.errorResponse(
+                    Collections.singletonList("Product not found"),
+                    HttpStatus.NOT_FOUND);
         }
     }
     
-    
+    //done
     @PostMapping("/getByNama")
-    public @ResponseBody List<Product> getByNama(@RequestParam String nama_product) {
-        return PR.findByNama(nama_product);
+    public ResponseEntity<Object> getByNama(@RequestParam String nama_product) {
+        List<Product> products = (List<Product>) PR.findByNama(nama_product);
+
+        if (products.isEmpty()) {
+            String message = "Gagal menemukan produk dengan nama '" + nama_product + "'";
+            return ResponseHandler.errorResponse(Collections.singletonList("Product not found"),HttpStatus.NOT_FOUND);
+        } else {
+            String message = "Berhasil menemukan produk dengan nama '" + nama_product + "'";
+            return ResponseEntity.ok(ResponseHandler.generateResponse(message, products, HttpStatus.OK).getBody());
+        }
     }
+
     
-    @GetMapping("/selectProduct")
-    public @ResponseBody Iterable<Product> getAll(){
-        return PR.findAll();
-    }
-    
+    //done
     @PutMapping("/updateProduct/{id_product}")
-    public ResponseEntity<String> updateProduct(@PathVariable String id_product, @RequestBody Product proNew) {
-        if(PR.existsById(id_product)){
-//            user uLama=ur.findByNIK(nik).getFirst();
-            Optional<Product> oldProduct = PR.findById(id_product);
-            Product pLama = oldProduct.get();
-            pLama.setId_product(id_product);
+    public ResponseEntity<?> updateProduct(@PathVariable String id_product, @RequestBody Product proNew) {
+        Optional<Product> oldProductOptional = PR.findById(id_product);
+        if (oldProductOptional.isPresent()) {
+            Product pLama = oldProductOptional.get();
             pLama.setNama_product(proNew.getNama_product());
             pLama.setDeskripsi_product(proNew.getDeskripsi_product());
             pLama.setHarga_product(proNew.getHarga_product());
             pLama.setStock_product(proNew.getStock_product());
             PR.save(pLama);
-            return ResponseEntity.ok("Produk berhasil diupdate");
-        }
-        else{
-            return ResponseEntity.ok("Produk tidak berhasil diupdate");
-        }
-    }
-    
-    @DeleteMapping("/deleteProduct")
-    public ResponseEntity<String> deleteProduct(@RequestBody Product pro){
-        // Memeriksa apakah produk ada sebelum menghapus
-        if(PR.existsById(pro.getId_product())){
-            PR.deleteById(pro.getId_product());
-            return ResponseEntity.ok("Produk berhasil dihapus");
+            return ResponseHandler.successResponse("Produk berhasil diupdate", HttpStatus.OK);
         } else {
-            return ResponseEntity.ok("Produk tidak ditemukan");
+            return ResponseHandler.errorResponse(Collections.singletonList("Produk tidak ditemukan"), HttpStatus.NOT_FOUND);
         }
     }
+
     
+    //done
+    @DeleteMapping("/deleteProduct")
+    public ResponseEntity<?> deleteProduct(@RequestBody Product pro) {
+        Optional<Product> proOptional = PR.findById(pro.getId_product());
+        if (proOptional.isPresent()) {
+            PR.deleteById(pro.getId_product());
+            return ResponseHandler.successResponse("Produk berhasil dihapus", HttpStatus.OK);
+        } else {
+            return ResponseHandler.errorResponse(Collections.singletonList("Produk tidak ditemukan"), HttpStatus.NOT_FOUND);
+        }
+    }
 }

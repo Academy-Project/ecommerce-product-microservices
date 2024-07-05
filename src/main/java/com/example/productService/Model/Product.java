@@ -14,6 +14,15 @@ public class Product {
     private String deskripsi_product;
     private Integer harga_product;
     private Integer stock_product;
+    private String id_kategori;
+
+    public String getId_kategori() {
+        return id_kategori;
+    }
+
+    public void setId_kategori(String id_kategori) {
+        this.id_kategori = id_kategori;
+    }
 
     public String getId_product() {
         return id_product;

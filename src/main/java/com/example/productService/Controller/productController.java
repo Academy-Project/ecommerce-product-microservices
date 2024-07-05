@@ -1,7 +1,9 @@
 package com.example.productService.Controller;
 
 
+import com.example.productService.Model.Kategori;
 import com.example.productService.Model.Product;
+import com.example.productService.Repository.kategoriRepository;
 import com.example.productService.Repository.productRepository;
 import com.example.productService.responses.ResponseHandler;
 
@@ -22,25 +24,33 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 @RequestMapping(path = "/product")
 public class productController {
     @Autowired
     private productRepository PR;
+    
+    @Autowired
+    private kategoriRepository KR;
 
     //done
     @PostMapping("/addProduct")
     public ResponseEntity<?> addUser(@RequestBody Product pro) {
         try {
-            if (pro.getHarga_product() == null || pro.getNama_product() == null || pro.getDeskripsi_product() == null || pro.getStock_product() == null) {
+            if (pro.getHarga_product() == null || pro.getNama_product() == null || pro.getDeskripsi_product() == null || pro.getStock_product() == null || pro.getId_kategori() == null) {
                 return ResponseHandler.errorResponse(Collections.singletonList("Product cannot be empty"), HttpStatus.BAD_REQUEST);
             }
             if (pro.getHarga_product() < 0 || pro.getStock_product() < 0) {
                 return ResponseHandler.errorResponse(Collections.singletonList("Product cannot be negative"), HttpStatus.BAD_REQUEST);
             }
-
+            Optional<Kategori> Kategori = KR.findById(pro.getId_kategori());
+            if (!Kategori.isPresent()) {
+                return ResponseHandler.errorResponse(
+                        Collections.singletonList("Kategori not found"),
+                        HttpStatus.NOT_FOUND);
+            }
+            
             pro.setId_product(UUID.randomUUID().toString().substring(0, 10));
             Product newPro = PR.save(pro);
             return ResponseHandler.generateResponse("Product added successfully", newPro, HttpStatus.CREATED);
@@ -91,7 +101,7 @@ public class productController {
         Optional<Product> oldProductOptional = PR.findById(id_product);
         if (oldProductOptional.isPresent()) {
 
-            if (proNew.getHarga_product() == null || proNew.getNama_product() == null || proNew.getDeskripsi_product() == null || proNew.getStock_product() == null) {
+            if (proNew.getHarga_product() == null || proNew.getNama_product() == null || proNew.getDeskripsi_product() == null || proNew.getStock_product() == null || proNew.getId_kategori() == null) {
                 return ResponseHandler.errorResponse(Collections.singletonList("Product cannot be empty"), HttpStatus.BAD_REQUEST);
             }
             if (proNew.getHarga_product() < 0 || proNew.getStock_product() < 0) {

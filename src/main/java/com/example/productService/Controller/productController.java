@@ -1,14 +1,15 @@
 package com.example.productService.Controller;
 
 
-
 import com.example.productService.Model.Product;
 import com.example.productService.Repository.productRepository;
 import com.example.productService.responses.ResponseHandler;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,31 +25,38 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
-@RequestMapping(path="/product")
+@RequestMapping(path = "/product")
 public class productController {
     @Autowired
     private productRepository PR;
-    
+
     //done
     @PostMapping("/addProduct")
     public ResponseEntity<?> addUser(@RequestBody Product pro) {
         try {
+            if (pro.getHarga_product() == null || pro.getNama_product() == null || pro.getDeskripsi_product() == null || pro.getStock_product() == null) {
+                return ResponseHandler.errorResponse(Collections.singletonList("Product cannot be empty"), HttpStatus.BAD_REQUEST);
+            }
+            if (pro.getHarga_product() < 0 || pro.getStock_product() < 0) {
+                return ResponseHandler.errorResponse(Collections.singletonList("Product cannot be negative"), HttpStatus.BAD_REQUEST);
+            }
+
             pro.setId_product(UUID.randomUUID().toString().substring(0, 10));
             Product newPro = PR.save(pro);
             return ResponseHandler.generateResponse("Product added successfully", newPro, HttpStatus.CREATED);
         } catch (Exception e) {
-            return ResponseHandler.errorResponse(Collections.singletonList("Failed to add Product: "),HttpStatus.NOT_FOUND);
+            return ResponseHandler.errorResponse(Collections.singletonList("Failed to add Product: "), HttpStatus.NOT_FOUND);
         }
     }
-    
+
     //done
     @GetMapping("/selectProduct")
     public ResponseEntity<List<Product>> getAllProduct() {
         List<Product> pro = (List<Product>) PR.findAll();
         return ResponseEntity.ok(pro);
     }
-    
-    
+
+
     //done
     @GetMapping("/getById/{id_product}")
     public ResponseEntity<?> getByID(@PathVariable String id_product) {
@@ -61,7 +69,7 @@ public class productController {
                     HttpStatus.NOT_FOUND);
         }
     }
-    
+
     //done
     @PostMapping("/getByNama")
     public ResponseEntity<Object> getByNama(@RequestParam String nama_product) {
@@ -69,19 +77,27 @@ public class productController {
 
         if (products.isEmpty()) {
             String message = "Gagal menemukan produk dengan nama '" + nama_product + "'";
-            return ResponseHandler.errorResponse(Collections.singletonList("Product not found"),HttpStatus.NOT_FOUND);
+            return ResponseHandler.errorResponse(Collections.singletonList("Product not found"), HttpStatus.NOT_FOUND);
         } else {
             String message = "Berhasil menemukan produk dengan nama '" + nama_product + "'";
             return ResponseEntity.ok(ResponseHandler.generateResponse(message, products, HttpStatus.OK).getBody());
         }
     }
 
-    
+
     //done
     @PutMapping("/updateProduct/{id_product}")
     public ResponseEntity<?> updateProduct(@PathVariable String id_product, @RequestBody Product proNew) {
         Optional<Product> oldProductOptional = PR.findById(id_product);
         if (oldProductOptional.isPresent()) {
+
+            if (proNew.getHarga_product() == null || proNew.getNama_product() == null || proNew.getDeskripsi_product() == null || proNew.getStock_product() == null) {
+                return ResponseHandler.errorResponse(Collections.singletonList("Product cannot be empty"), HttpStatus.BAD_REQUEST);
+            }
+            if (proNew.getHarga_product() < 0 || proNew.getStock_product() < 0) {
+                return ResponseHandler.errorResponse(Collections.singletonList("Product cannot be negative"), HttpStatus.BAD_REQUEST);
+            }
+
             Product pLama = oldProductOptional.get();
             pLama.setNama_product(proNew.getNama_product());
             pLama.setDeskripsi_product(proNew.getDeskripsi_product());
@@ -94,7 +110,7 @@ public class productController {
         }
     }
 
-    
+
     //done
     @DeleteMapping("/deleteProduct")
     public ResponseEntity<?> deleteProduct(@RequestBody Product pro) {

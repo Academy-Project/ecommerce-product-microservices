@@ -12,8 +12,8 @@ public class Product {
     private String id_product;
     private String nama_product;
     private String deskripsi_product;
-    private String harga_product;
-    private String stock_product;
+    private Integer harga_product;
+    private Integer stock_product;
 
     public String getId_product() {
         return id_product;
@@ -39,22 +39,19 @@ public class Product {
         this.deskripsi_product = deskripsi_product;
     }
 
-    public String getHarga_product() {
+    public Integer getHarga_product() {
         return harga_product;
     }
 
-    public void setHarga_product(String harga_product) {
+    public void setHarga_product(Integer harga_product) {
         this.harga_product = harga_product;
     }
 
-    public String getStock_product() {
+    public Integer getStock_product() {
         return stock_product;
     }
 
-    public void setStock_product(String stock_product) {
+    public void setStock_product(Integer stock_product) {
         this.stock_product = stock_product;
     }
-    
-    
-    
 }
